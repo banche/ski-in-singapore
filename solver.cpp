@@ -4,9 +4,9 @@ namespace SkiChallenge {
 
 //fit it inside 64bits
 struct BoxState {
-  uint16_t pathLength;
-  uint16_t drop;
-  uint32_t isVisited;
+  uint32_t pathLength;
+  uint32_t drop;
+  bool isVisited;
   
   BoxState();
 };
@@ -27,12 +27,12 @@ void lookNeighbors(const Mountain& mountain, BoxStates& states, unsigned int ind
   for(auto n: neighbors)
   {
     // first time we visit it check the neighbors
-    if( states[n].isVisited == 0)
+    if( not states[n].isVisited)
     {
       lookNeighbors(mountain,states,n);
     }
     auto pathLength = states[n].pathLength + 1;
-    uint16_t drop = states[n].drop + mountain[index] - mountain[n];
+    uint32_t drop = states[n].drop + mountain[index] - mountain[n];
     
     // keep best only
     if(pathLength > states[index].pathLength)
@@ -45,18 +45,23 @@ void lookNeighbors(const Mountain& mountain, BoxStates& states, unsigned int ind
       states[index].drop = std::max(states[index].drop,drop);
     }
   }
-  states[index].isVisited = 1;
+  // mark state as visited
+  // no need to redo the computation for this state
+  states[index].isVisited = true;
 }
 
 std::pair<unsigned int,unsigned int> findLongestPath(const Mountain& mountain)
 {
+  // init states with 0 and not visited
   BoxStates states(mountain.size());
-  uint16_t maxPathLength = 0;
-  uint16_t maxDrop = 0;
+  uint32_t maxPathLength = 0;
+  uint32_t maxDrop = 0;
   
+  // for all hills compute pathLength and drop
+  // save the best one
   for ( auto i = 0; i < mountain.size() ; ++i)
   {
-    if ( states[i].isVisited == 0 )
+    if ( not states[i].isVisited )
       lookNeighbors(mountain,states,i);
     
     if(states[i].pathLength > maxPathLength)
